@@ -309,36 +309,49 @@ function importCookies() {
     var nCookiesImportedThisTime = 0;
     var text = $(".value", "#pasteCookie").val();
     var error = $(".error", "#pasteCookie");
+    var storeId;
     error.hide();
     error.text("For format reference export cookies in JSON");
     error.html(error.html() + "<br> Also check&nbsp;<a href='http://developer.chrome.com/extensions/cookies.html#type-Cookie' target='_blank'>Developer Chrome Cookie</a><br>Error:");
 
-    try {
-        var cookieArray = $.parseJSON(text);
-        if (Object.prototype.toString.apply(cookieArray) === "[object Object]")
-            cookieArray = [cookieArray];
-        for (var i = 0; i < cookieArray.length; i++) {
-            try {
-                var cJSON = cookieArray[i];
-                var cookie = cookieForCreationFromFullCookie(cJSON);
-                chrome.cookies.set(cookie);
-                nCookiesImportedThisTime++;
-            } catch (e) {
-                error.html(error.html() + "<br>" + $('<div/>').text("Cookie number " + i).html() + "<br>" + $('<div/>').text(e.message).html());
-                console.error(e.message);
-                error.fadeIn();
-                return;
+    chrome.cookies.getAllCookieStores(function (cookieStores) {
+        for (let x = 0; x < cookieStores.length; x++) {
+            if (cookieStores[x].tabIds.indexOf(currentTabID) != -1) {
+                storeId = cookieStores[x].id;
+                break;
             }
         }
-    } catch (e) {
-        error.html(error.html() + "<br>" + $('<div/>').text(e.message).html());
-        console.error(e.message);
-        error.fadeIn();
-        return;
-    }
 
-    data.nCookiesImported += nCookiesImportedThisTime;
-    doSearch();
+        try {
+            var cookieArray = $.parseJSON(text);
+            if (Object.prototype.toString.apply(cookieArray) === "[object Object]")
+                cookieArray = [cookieArray];
+            for (var i = 0; i < cookieArray.length; i++) {
+                try {
+                    var cJSON = cookieArray[i];
+                    var cookie = cookieForCreationFromFullCookie(cJSON);
+                    cookie.storeId = storeId;
+                    chrome.cookies.set(cookie);
+                    nCookiesImportedThisTime++;
+                } catch (e) {
+                    error.html(error.html() + "<br>" + $('<div/>').text("Cookie number " + i).html() + "<br>" + $('<div/>').text(e.message).html());
+                    console.error(e.message);
+                    error.fadeIn();
+                    return;
+                }
+            }
+        } catch (e) {
+            error.html(error.html() + "<br>" + $('<div/>').text(e.message).html());
+            console.error(e.message);
+            error.fadeIn();
+            return;
+        }
+    
+        data.nCookiesImported += nCookiesImportedThisTime;
+        doSearch();
+
+    })
+
     return;
 }
 
