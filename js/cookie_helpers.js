@@ -59,6 +59,7 @@ function Filter() {
 
 function cookieForCreationFromFullCookie(fullCookie) {
     var newCookie = {};
+    fullCookie.domain = fullCookie.domain.replace( /^\./,"");
     //If no real url is available use: "https://" : "http://" + domain + path
     newCookie.url = "http" + ((fullCookie.secure) ? "s" : "") + "://" + fullCookie.domain + fullCookie.path;
     newCookie.name = fullCookie.name;
